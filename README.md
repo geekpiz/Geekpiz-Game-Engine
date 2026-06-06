@@ -5,8 +5,7 @@
 - [Key Features](#Key-Features)
 - [Installation & Startup](#Installation-&-Startup)
 	- [Setup](#Setup)
-	  - [Method 1: When cloning for the first time](#Method-1:-When-cloning-for-the-first-time)
-	  - [Method 2: If you have already finished cloning](#Method-2:-If-you-have-already-finished-cloning)
+	  
 	- [How to build](#How-to-build)
 	- [Installation](#Installation)
 - [Instructions](#Instructions)
@@ -20,21 +19,7 @@
 
 ## Installation & Startup
 ### Setup
-This project uses `raylib` as a submodule. When cloning the repository for the first time, choose one of the methods below.
 
-#### Method 1: When cloning for the first time
-Use the command below to download all the Leirab source code at once.
-
-```bash
-	git clone --recursive https://github.com/geekpiz/Geekpiz-Game-Engine
-```
-
-#### Method 2: If you have already finished cloning
-If you've already cloned the project, run the following command inside the project folder.
-
-```bash
-	git submodule update --init --recursive
-```
 
 ### How to build
 1. Build using CMake from the project root folder.
