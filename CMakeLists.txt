@@ -11,7 +11,7 @@ endif()
 project ("Geekpiz Game Engine")
 
 # Add the source code to this project's executable file.(이 프로젝트의 실행 파일에 소스를 추가합니다.)
-add_executable ("Geekpiz_Editor_1.0" 
+add_executable ("Geekpiz_Editor_1.0"
     "src/Main.cpp" 
     "src/Main.h" 
     "src/engine/Render/render_editer.cpp" 
@@ -63,3 +63,9 @@ target_include_directories("Geekpiz_Editor_1.0" PRIVATE
     libs/ImGui/backends
     libs/glfw/include
 )
+
+if(WIN32)
+    set_target_properties(Geekpiz_Editor_1.0 PROPERTIES 
+        LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup"
+    )
+endif()

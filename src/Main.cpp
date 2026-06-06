@@ -26,6 +26,8 @@ int main()
 
     // 4. Initializing ImGui(ImGui 초기화)
     ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
@@ -40,7 +42,7 @@ int main()
         ImGui::NewFrame();
 
         // Drawing UI(UI 그리기)
-        RenderEditer::render_chanyul();
+        RenderEditer::Renders();
 
         // Rendering(렌더링)
         ImGui::Render();
