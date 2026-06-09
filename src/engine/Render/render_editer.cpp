@@ -1,8 +1,11 @@
 #include "imgui.h"
 #include "Render.h"
+#include "engine\Render\window\Window.h"
 
 namespace RenderEditer
 {
+    bool window = true;
+
     // Docking Space Settings(도킹 스페이스 설정)
     void SetupDockSpace()
     {
@@ -24,20 +27,16 @@ namespace RenderEditer
         ImGui::End();
     }
 
-	void render_chanyul()
-	{
-		ImGui::Begin("Geekpiz Engine Controller");
-		ImGui::Text("Engine is running smoothly, Chan-yul!");
-		ImGui::End();
-
-		ImGui::Begin("Geekpiz  Controller");
-		ImGui::Text("Engine is  smoothly, Chan-yul!");
-		ImGui::End();
-	}
+	
 
 	void Renders()
 	{
         SetupDockSpace();
-		render_chanyul();
+        Window::Render_Assets();
+        Window::Render_Console();
+        Window::Render_Game();
+        Window::Render_Hierarchy();
+        Window::Render_Inspector();
+        Window::Render_Scene();
 	}
 }
