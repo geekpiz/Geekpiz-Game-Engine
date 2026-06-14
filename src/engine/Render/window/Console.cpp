@@ -5,9 +5,9 @@ namespace Window {
 
 	void Render_Console()
 	{
-		if (Render_Console)
+		if (render_Console)
 		{
-			if (ImGui::Begin("Console", &render_Console));
+			if (ImGui::Begin("Console", &render_Console))
 			{
 				ImGui::Text("Console");
 			}

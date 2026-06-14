@@ -5,9 +5,9 @@ namespace Window {
 
 	void Render_Hierarchy()
 	{
-		if (Render_Hierarchy)
+		if (render_Hierarchy)
 		{
-			if (ImGui::Begin("Hierarchy", &render_Hierarchy));
+			if (ImGui::Begin("Hierarchy", &render_Hierarchy))
 			{
 				ImGui::Text("Hierarchy");
 			}

@@ -5,9 +5,9 @@ namespace Window {
 
 	void Render_Scene()
 	{
-		if (Render_Scene)
+		if (render_Scene)
 		{
-			if (ImGui::Begin("Scene", &render_Scene));
+			if (ImGui::Begin("Scene", &render_Scene))
 			{
 				ImGui::Text("Scene");
 			}

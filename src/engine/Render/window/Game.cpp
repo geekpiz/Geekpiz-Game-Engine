@@ -5,9 +5,9 @@ namespace Window {
 
 	void Render_Game()
 	{
-		if (Render_Game)
+		if (render_Game)
 		{
-			if (ImGui::Begin("Game", &render_Game));
+			if (ImGui::Begin("Game", &render_Game))
 			{
 				ImGui::Text("Game");
 			}

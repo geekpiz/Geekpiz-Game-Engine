@@ -16,7 +16,7 @@ add_executable ("Geekpiz_Editor_1.0"
     "src/Main.h" 
     "src/engine/Render/render_editer.cpp" 
     "src/engine/Render/Render.h"
- "src/engine/Render/Window/Inspector.cpp" "src/engine/Render/Window/Scene.cpp" "src/engine/Render/Window/Game.cpp" "src/engine/Render/Window/Hierarchy.cpp" "src/engine/Render/Window/Assets.cpp" "src/engine/Render/Window/Console.cpp" "src/engine/Render/Window/Window.h")
+ "src/engine/Render/Window/Inspector.cpp" "src/engine/Render/Window/Scene.cpp" "src/engine/Render/Window/Game.cpp" "src/engine/Render/Window/Hierarchy.cpp" "src/engine/Render/Window/Assets.cpp" "src/engine/Render/Window/Console.cpp" "src/engine/Render/Window/Window.h" "src/engine/Render/topbar.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET "Geekpiz_Editor_1.0" PROPERTY CXX_STANDARD 20)
@@ -35,7 +35,7 @@ set(IMGUI_SOURCES
 )
 
 # Creating the Im Gui Library(imgui 라이브러리 만들기)
-add_library(imgui ${IMGUI_SOURCES}  "src/engine/Render/window/Inspector.cpp" "src/engine/Render/window/Scene.cpp" "src/engine/Render/window/Game.cpp" "src/engine/Render/window/Hierarchy.cpp" "src/engine/Render/window/Assets.cpp" "src/engine/Render/window/Console.cpp" "src/engine/Render/window/Window.h")
+add_library(imgui ${IMGUI_SOURCES}  "src/engine/Render/window/Inspector.cpp" "src/engine/Render/window/Scene.cpp" "src/engine/Render/window/Game.cpp" "src/engine/Render/window/Hierarchy.cpp" "src/engine/Render/window/Assets.cpp" "src/engine/Render/window/Console.cpp" "src/engine/Render/window/Window.h" "src/engine/Render/topbar.cpp")
 
 target_include_directories(imgui PRIVATE
     libs/ImGui

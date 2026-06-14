@@ -5,9 +5,9 @@ namespace Window {
 
 	void Render_Inspector()
 	{
-		if (Render_Inspector)
+		if (render_Inspector)
 		{
-			if (ImGui::Begin("Inspector", &render_Inspector));
+			if (ImGui::Begin("Inspector", &render_Inspector))
 			{
 				ImGui::Text("Inspector");
 			}
