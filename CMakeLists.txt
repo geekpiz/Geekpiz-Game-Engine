@@ -58,7 +58,7 @@ target_link_libraries(Geekpiz_Editor_1.0
 )
 
 target_include_directories("Geekpiz_Editor_1.0" PRIVATE 
-    src 
+    src
     libs/ImGui 
     libs/ImGui/backends
     libs/glfw/include

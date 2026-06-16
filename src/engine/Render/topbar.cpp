@@ -1,7 +1,7 @@
 #include "imgui.h"
 #include "Render.h"
 #include "window/Window.h"
-
+#include "../../Main.h"
 namespace RenderEditer {
     void top_bar()
     {
@@ -9,10 +9,12 @@ namespace RenderEditer {
         {
             if (ImGui::BeginMenu("File"))
             {
-                //뒤에 컨 o 있어도 눌렀ㅇㄹ 때 실행은 안 됨, 따라서 다음에 다시 연결필요
+                //뒤에 컨 있어도 눌렀을 때 실행은 안 됨, 따라서 다음에 다시 연결필요
                 if (ImGui::MenuItem("Open", "Ctrl + O")) { /* 열기 로직 */ }
                 ImGui::Separator();
-                if (ImGui::MenuItem("Exit")) { /* 종료 로직 */ }
+                if (ImGui::MenuItem("Exit", "Ctrl + Q")) {main_header::close_window();}
+                if (ImGui::MenuItem("Save", "Ctrl + S")) { /* 저장 로직 */ }
+                ImGui::Separator();
                 ImGui::EndMenu();
             }
 

@@ -2,9 +2,9 @@
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
-#include <GLFW/glfw3.h>
-#include <iostream>
 #include "engine/Render/Render.h"
+
+GLFWwindow* g_Window = nullptr;
 
 int main()
 {
@@ -16,23 +16,23 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Creating a Window(창 생성)
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "Geekpiz Game Engine", NULL, NULL);
-    if (!window) {
+    g_Window = glfwCreateWindow(1280, 720, "Geekpiz Game Engine", NULL, NULL);
+    if (!g_Window) {
         glfwTerminate();
         return -1;
     }
-    glfwMakeContextCurrent(window);
+    glfwMakeContextCurrent(g_Window);
     glfwSwapInterval(1);
 
     // 4. Initializing ImGui(ImGui 초기화)
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplGlfw_InitForOpenGL(g_Window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
     // Main Loop(메인 루프)
-    while (!glfwWindowShouldClose(window))
+    while (!glfwWindowShouldClose(g_Window))
     {
         glfwPollEvents();
 
@@ -49,15 +49,23 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(g_Window);
     }
 
     // Cleanup(종료 처리)
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
-    glfwDestroyWindow(window);
+    glfwDestroyWindow(g_Window);
     glfwTerminate();
 
     return 0;
+}
+
+namespace main_header {
+
+    void close_window()
+    {
+        glfwSetWindowShouldClose(g_Window, GLFW_TRUE);
+    }
 }
