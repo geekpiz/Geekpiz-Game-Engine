@@ -9,7 +9,8 @@ namespace RenderEditer {
         {
             if (ImGui::BeginMenu("File"))
             {
-                //뒤에 컨 있어도 눌렀을 때 실행은 안 됨, 따라서 다음에 다시 연결필요
+                // Even if there is a control button on the back, it won't work when pressed, so you'll need to reconnect it later.
+                // (뒤에 컨트롤 있어도 눌렀을 때 실행은 안 됨, 따라서 다음에 다시 연결필요)
                 if (ImGui::MenuItem("Open", "Ctrl + O")) { /* 열기 로직 */ }
                 ImGui::Separator();
                 if (ImGui::MenuItem("Exit", "Ctrl + Q")) { main_header::close_window(); }
