@@ -41,6 +41,8 @@ Therefore, we will **not take any legal action or raise any objections even if u
 - List modifications
 - State that the Geekpiz Game Engine was used;
 
+**If Geekpiz has helped you succeed in your development efforts, please spread the word about Geekpiz and join us in supporting the open-source ecosystem!**
+
 
 
 ## Contributing
