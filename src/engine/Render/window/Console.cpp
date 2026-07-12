@@ -7,9 +7,9 @@ namespace Window {
 	{
 		if (render_Console)
 		{
-			if (ImGui::Begin("Console", &render_Console))
+			if (ImGui::Begin(L::Get("Console").c_str(), &render_Console))
 			{
-				ImGui::Text("Console");
+				ImGui::Text(L::Get("Console").c_str());
 			}
 			ImGui::End();
 		}

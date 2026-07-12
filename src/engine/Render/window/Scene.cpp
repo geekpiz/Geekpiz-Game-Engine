@@ -7,9 +7,9 @@ namespace Window {
 	{
 		if (render_Scene)
 		{
-			if (ImGui::Begin("Scene", &render_Scene))
+			if (ImGui::Begin(L::Get("Scene").c_str(), &render_Scene))
 			{
-				ImGui::Text("Scene");
+				ImGui::Text(L::Get("Scene").c_str());
 			}
 			ImGui::End();
 		}

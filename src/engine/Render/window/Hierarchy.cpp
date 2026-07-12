@@ -7,9 +7,9 @@ namespace Window {
 	{
 		if (render_Hierarchy)
 		{
-			if (ImGui::Begin("Hierarchy", &render_Hierarchy))
+			if (ImGui::Begin(L::Get("Hierarchy").c_str(), &render_Hierarchy))
 			{
-				ImGui::Text("Hierarchy");
+				ImGui::Text(L::Get("Hierarchy").c_str());
 			}
 			ImGui::End();
 		}

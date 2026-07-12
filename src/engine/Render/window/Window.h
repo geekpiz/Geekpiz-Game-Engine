@@ -1,6 +1,8 @@
 #pragma once
 
 #include "ImGui.h"
+#include "../../Settings/Settings.h"
+#include "../../Settings/Language/Language.h"
 
 namespace Window {
 	//Variable(변수)

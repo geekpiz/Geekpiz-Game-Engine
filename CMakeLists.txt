@@ -9,6 +9,8 @@ if (MSVC)
 endif()
 
 project ("Geekpiz Game Engine")
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Add the source code to this project's executable file.(이 프로젝트의 실행 파일에 소스를 추가합니다.)
 add_executable ("Geekpiz_Editor_1.0"
@@ -16,7 +18,7 @@ add_executable ("Geekpiz_Editor_1.0"
     "src/Main.h" 
     "src/engine/Render/render_editer.cpp" 
     "src/engine/Render/Render.h"
- "src/engine/Render/Window/Inspector.cpp" "src/engine/Render/Window/Scene.cpp" "src/engine/Render/Window/Game.cpp" "src/engine/Render/Window/Hierarchy.cpp" "src/engine/Render/Window/Assets.cpp" "src/engine/Render/Window/Console.cpp" "src/engine/Render/Window/Window.h" "src/engine/Render/topbar.cpp")
+ "src/engine/Render/Window/Inspector.cpp" "src/engine/Render/Window/Scene.cpp" "src/engine/Render/Window/Game.cpp" "src/engine/Render/Window/Hierarchy.cpp" "src/engine/Render/Window/Assets.cpp" "src/engine/Render/Window/Console.cpp" "src/engine/Render/Window/Window.h" "src/engine/Render/topbar.cpp"  "src/engine/Render/ImGuiStyle.cpp"  "src/engine/Settings/Settings.cpp" "src/engine/Settings/Settings.h" "src/engine/Settings/Language/Language.cpp" "src/engine/Settings/Language/Language.h" "src/engine/Utilities/FileSystem.h" "src/engine/Utilities/FileSystem.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET "Geekpiz_Editor_1.0" PROPERTY CXX_STANDARD 20)
@@ -35,7 +37,7 @@ set(IMGUI_SOURCES
 )
 
 # Creating the Im Gui Library(imgui 라이브러리 만들기)
-add_library(imgui ${IMGUI_SOURCES}  "src/engine/Render/window/Inspector.cpp" "src/engine/Render/window/Scene.cpp" "src/engine/Render/window/Game.cpp" "src/engine/Render/window/Hierarchy.cpp" "src/engine/Render/window/Assets.cpp" "src/engine/Render/window/Console.cpp" "src/engine/Render/window/Window.h" "src/engine/Render/topbar.cpp")
+add_library(imgui ${IMGUI_SOURCES})
 
 target_include_directories(imgui PRIVATE
     libs/ImGui
@@ -44,7 +46,15 @@ target_include_directories(imgui PRIVATE
 )
 
 # Tell me where the header file is located(헤더 파일 위치 알려주기)
-target_include_directories("Geekpiz_Editor_1.0" PRIVATE libs/ImGui)
+target_include_directories("Geekpiz_Editor_1.0" PRIVATE 
+    src
+    libs/ImGui 
+    libs/ImGui/backends
+    libs/glfw/include
+    src/engine/Settings
+    src/engine/Utilities
+
+)
 
 add_subdirectory(libs/glfw)
 
@@ -55,13 +65,6 @@ target_link_libraries(Geekpiz_Editor_1.0
         imgui
         glfw
         OpenGL::GL
-)
-
-target_include_directories("Geekpiz_Editor_1.0" PRIVATE 
-    src
-    libs/ImGui 
-    libs/ImGui/backends
-    libs/glfw/include
 )
 
 if(WIN32)

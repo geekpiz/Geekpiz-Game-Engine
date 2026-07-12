@@ -7,40 +7,41 @@ namespace RenderEditer {
     {
         if (ImGui::BeginMainMenuBar())
         {
-            if (ImGui::BeginMenu("File"))
+            if (ImGui::BeginMenu(Settings::Get("File").c_str()))
             {
                 // Even if there is a control button on the back, it won't work when pressed, so you'll need to reconnect it later.
                 // (뒤에 컨트롤 있어도 눌렀을 때 실행은 안 됨, 따라서 다음에 다시 연결필요)
-                if (ImGui::MenuItem("Open", "Ctrl + O")) { /* 열기 로직 */ }
+                if (ImGui::MenuItem(L::Get("Open").c_str(), "Ctrl + O")) { /* 열기 로직 */ }
                 ImGui::Separator();
-                if (ImGui::MenuItem("Exit", "Ctrl + Q")) { main_header::close_window(); }
+                if (ImGui::MenuItem(L::Get("Exit").c_str(), "Ctrl + Q")) { main_header::close_window(); }
                 ImGui::Separator();
-                if (ImGui::MenuItem("Save", "Ctrl + S")) { /* 저장 로직 */ }
+                if (ImGui::MenuItem(L::Get("Save").c_str(), "Ctrl + S")) { /* 저장 로직 */ }
                 ImGui::Separator();
+
                 ImGui::EndMenu();
             }
 
-            if (ImGui::BeginMenu("Edit"))
+            if (ImGui::BeginMenu(L::Get("Edit").c_str()))
             {
-                if (ImGui::MenuItem("Settings")) { /* 설정 창 열기 */ }
+                if (ImGui::MenuItem(L::Get("Settings").c_str())) { /* 설정 창 열기 */ }
                 ImGui::EndMenu();
             }
 
-            if (ImGui::BeginMenu("Window"))
+            if (ImGui::BeginMenu(L::Get("Window").c_str()))
             {
-                if (ImGui::BeginMenu("General"))
+                if (ImGui::BeginMenu(L::Get("General").c_str()))
                 {
-                    if (ImGui::MenuItem("Scene", "Alt + 1")) { Window::render_Scene = true; }
+                    if (ImGui::MenuItem(L::Get("Scene").c_str(), "Alt + 1")) { Window::render_Scene = true; }
                     ImGui::Separator();
-                    if (ImGui::MenuItem("Game", "Alt + 2")) { Window::render_Game = true; }
+                    if (ImGui::MenuItem(L::Get("Game").c_str(), "Alt + 2")) { Window::render_Game = true; }
                     ImGui::Separator();
-                    if (ImGui::MenuItem("Inspector", "Alt + 3")) { Window::render_Inspector = true; }
+                    if (ImGui::MenuItem(L::Get("Inspector").c_str(), "Alt + 3")) { Window::render_Inspector = true; }
                     ImGui::Separator();
-                    if (ImGui::MenuItem("Hierarchy", "Alt + 4")) { Window::render_Hierarchy = true; }
+                    if (ImGui::MenuItem(L::Get("Hierarchy").c_str(), "Alt + 4")) { Window::render_Hierarchy = true; }
                     ImGui::Separator();
-                    if (ImGui::MenuItem("Assets", "Alt + 5")) { Window::render_Assets = true; }
+                    if (ImGui::MenuItem(L::Get("Assets").c_str(), "Alt + 5")) { Window::render_Assets = true; }
                     ImGui::Separator();
-                    if (ImGui::MenuItem("Console", "Alt + 6")) { Window::render_Console = true; }
+                    if (ImGui::MenuItem(L::Get("Console").c_str(), "Alt + 6")) { Window::render_Console = true; }
 
                     ImGui::EndMenu();
                 }

@@ -7,9 +7,9 @@ namespace Window {
 	{
 		if (render_Game)
 		{
-			if (ImGui::Begin("Game", &render_Game))
+			if (ImGui::Begin(L::Get("Game").c_str(), &render_Game))
 			{
-				ImGui::Text("Game");
+				ImGui::Text(L::Get("Game").c_str());
 			}
 			ImGui::End();
 		}

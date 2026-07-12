@@ -1,4 +1,5 @@
 #include "Window.h"
+
 namespace Window{
 
 	bool render_Assets = true;
@@ -7,9 +8,9 @@ namespace Window{
 	{
 		if (render_Assets)
 		{
-			if (ImGui::Begin("Assets", &render_Assets))
+			if (ImGui::Begin(L::Get("Assets").c_str(), &render_Assets))
 			{
-				ImGui::Text("Assets");
+				ImGui::Text(L::Get("Assets").c_str());
 			}
 			ImGui::End();
 		}

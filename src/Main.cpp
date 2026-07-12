@@ -3,11 +3,15 @@
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 #include "engine/Render/Render.h"
+#include "engine/Settings/Settings.h"
+#include "engine/Settings/Language/Language.h"
 
 GLFWwindow* g_Window = nullptr;
 
 int main()
 {
+    Settings::Load();
+	L::Load();
     if (!glfwInit()) return -1;
 
     // Setting the OpenGL version (3.3 Core)(OpenGL 버전 설정 (3.3 Core))
@@ -30,6 +34,8 @@ int main()
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     ImGui_ImplGlfw_InitForOpenGL(g_Window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
+    RenderEditer::ApplyUnityStyle();
+    RenderEditer::ApplyCustomEngineStyle();
 
     // Main Loop(메인 루프)
     while (!glfwWindowShouldClose(g_Window))

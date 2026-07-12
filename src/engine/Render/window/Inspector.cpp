@@ -7,9 +7,9 @@ namespace Window {
 	{
 		if (render_Inspector)
 		{
-			if (ImGui::Begin("Inspector", &render_Inspector))
+			if (ImGui::Begin(L::Get("Inspector").c_str(), &render_Inspector))
 			{
-				ImGui::Text("Inspector");
+				ImGui::Text(L::Get("Inspector").c_str());
 			}
 			ImGui::End();
 		}
