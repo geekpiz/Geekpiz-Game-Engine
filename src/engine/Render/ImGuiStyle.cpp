@@ -115,5 +115,9 @@ namespace RenderEditer {
         colors[ImGuiCol_Text] = GetImColor(TextColor1);
         colors[ImGuiCol_Border] = GetImColor(SubColor1);
         colors[ImGuiCol_FrameBg] = GetImColor(FrameBgColor);
+
+        unsigned int DockPreviewColor = Settings::GetColor("SubColor2", 0x262829);
+        colors[ImGuiCol_DockingPreview] = GetImColor(DockPreviewColor, 0.5f);
+
     }
 }

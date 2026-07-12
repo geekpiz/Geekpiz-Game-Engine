@@ -1,36 +1,80 @@
 #include "Settings.h"
-#include "FileSystem.h" // Include the cross-platform file system module (크로스 플랫폼 파일 시스템 모듈 포함)
+#include "FileSystem.h"
 #include <sstream>
 #include <unordered_map>
+#include <algorithm>
+#include <cctype>
 
-namespace L {
+namespace Settings {
 
-    // Internal data storage (내부 데이터 저장소)
-    static std::unordered_map<std::string, std::string> Ldata;
+    static std::unordered_map<std::string, std::string> settingsData;
+
+    static std::string TrimString(const std::string& str) {
+        if (str.empty()) return "";
+
+        size_t first = 0;
+        while (first < str.size() && (std::isspace(static_cast<unsigned char>(str[first])) || str[first] == '"')) {
+            first++;
+        }
+        if (first == str.size()) return "";
+
+        size_t last = str.size() - 1;
+        while (last >= first && (std::isspace(static_cast<unsigned char>(str[last])) || str[last] == '"' || str[last] == '\r')) {
+            if (last == 0) break;
+            last--;
+        }
+        return str.substr(first, (last - first + 1));
+    }
 
     void Load() {
-        Ldata.clear(); // Clear existing data (기존 데이터 초기화)
+        settingsData.clear();
 
-        // Read the file string content through the absolute base engine path (절대적인 기본 엔진 경로를 통해 파일 문자열 내용 읽기)
         std::string fileContent = FS::ReadFile("Settings/Settings.json");
 
-        // Skip processing if the file is empty or missing (파일이 비어있거나 없으면 처리 건너뛰기)
         if (fileContent.empty()) return;
 
         std::stringstream ss(fileContent);
         std::string line;
 
         while (std::getline(ss, line)) {
-            size_t delimiterPos = line.find(':'); // Find separator (구분자 찾기)
+            size_t delimiterPos = line.find(':');
             if (delimiterPos != std::string::npos) {
-                std::string key = line.substr(0, delimiterPos);
-                std::string value = line.substr(delimiterPos + 1);
-                Ldata[key] = value; // Store in map (맵에 저장)
+                std::string key = TrimString(line.substr(0, delimiterPos));
+                std::string value = TrimString(line.substr(delimiterPos + 1));
+
+                if (!key.empty()) {
+                    settingsData[key] = value;
+                }
             }
         }
     }
 
     std::string Get(const std::string& key) {
-        return Ldata.count(key) ? Ldata[key] : key;
+        return settingsData.count(key) ? settingsData[key] : key;
+    }
+
+    unsigned int GetColor(const std::string& key, unsigned int defaultColor) {
+        if (settingsData.find(key) == settingsData.end()) {
+            return defaultColor;
+        }
+
+        std::string colorStr = settingsData[key];
+
+        colorStr.erase(std::remove(colorStr.begin(), colorStr.end(), ' '), colorStr.end());
+        colorStr.erase(std::remove(colorStr.begin(), colorStr.end(), '\r'), colorStr.end());
+        colorStr.erase(std::remove(colorStr.begin(), colorStr.end(), '\n'), colorStr.end());
+
+        if (colorStr.empty()) return defaultColor;
+
+        try {
+            if (colorStr.substr(0, 2) != "0x") {
+                colorStr = "0x" + colorStr;
+            }
+            unsigned int parsedColor = static_cast<unsigned int>(std::stoul(colorStr, nullptr, 16));
+            return parsedColor;
+        }
+        catch (...) {
+            return defaultColor;
+        }
     }
 }
