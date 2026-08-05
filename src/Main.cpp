@@ -5,6 +5,7 @@
 #include "engine/Render/Render.h"
 #include "engine/Settings/Settings.h"
 #include "engine/Settings/Language/Language.h"
+#include "engine/Utilities/ConsoleLog.h"
 
 GLFWwindow* g_Window = nullptr;
 
@@ -35,7 +36,21 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(g_Window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
     RenderEditer::ApplyUnityStyle();
-    RenderEditer::ApplyCustomEngineStyle();
+
+    // --- Info 출력 3개 (같은 거 2개, 다른 거 1개) ---
+    ConsoleLog::Append(LogLevel::Info, "Engine initialization sequence started.");
+    ConsoleLog::Append(LogLevel::Info, "Engine initialization sequence started.");
+    ConsoleLog::Append(LogLevel::Info, "Loaded main scene configuration successfully.");
+
+    // --- Warning 출력 3개 (같은 거 2개, 다른 거 1개) ---
+    ConsoleLog::Append(LogLevel::Warning, "Texture asset missing metadata, using fallback.");
+    ConsoleLog::Append(LogLevel::Warning, "Texture asset missing metadata, using fallback.");
+    ConsoleLog::Append(LogLevel::Warning, "Audio device buffer size is lower than recommended.");
+
+    // --- Error 출력 3개 (같은 거 2개, 다른 거 1개) ---
+    ConsoleLog::Append(LogLevel::Error, "Failed to load fragment shader file: 'default.frag'.");
+    ConsoleLog::Append(LogLevel::Error, "Failed to load fragment shader file: 'default.frag'.");
+    ConsoleLog::Append(LogLevel::Error, "Null pointer exception encountered in physics update loop.");
 
     // Main Loop(메인 루프)
     while (!glfwWindowShouldClose(g_Window))

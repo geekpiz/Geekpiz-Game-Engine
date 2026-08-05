@@ -7,5 +7,4 @@ namespace RenderEditer
     void Renders();
     void top_bar();
     void ApplyUnityStyle();
-    void ApplyCustomEngineStyle();
 }

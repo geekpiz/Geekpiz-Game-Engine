@@ -18,7 +18,7 @@ add_executable ("Geekpiz_Editor_1.0"
     "src/Main.h" 
     "src/engine/Render/render_editer.cpp" 
     "src/engine/Render/Render.h"
- "src/engine/Render/Window/Inspector.cpp" "src/engine/Render/Window/Scene.cpp" "src/engine/Render/Window/Game.cpp" "src/engine/Render/Window/Hierarchy.cpp" "src/engine/Render/Window/Assets.cpp" "src/engine/Render/Window/Console.cpp" "src/engine/Render/Window/Window.h" "src/engine/Render/topbar.cpp"  "src/engine/Render/ImGuiStyle.cpp"  "src/engine/Settings/Settings.cpp" "src/engine/Settings/Settings.h" "src/engine/Settings/Language/Language.cpp" "src/engine/Settings/Language/Language.h" "src/engine/Utilities/FileSystem.h" "src/engine/Utilities/FileSystem.cpp")
+ "src/engine/Render/Window/Inspector.cpp" "src/engine/Render/Window/Scene.cpp" "src/engine/Render/Window/Game.cpp" "src/engine/Render/Window/Hierarchy.cpp" "src/engine/Render/Window/Assets.cpp" "src/engine/Render/Window/Console.cpp" "src/engine/Render/Window/Window.h" "src/engine/Render/topbar.cpp"  "src/engine/Render/ImGuiStyle.cpp"  "src/engine/Settings/Settings.cpp" "src/engine/Settings/Settings.h" "src/engine/Settings/Language/Language.cpp" "src/engine/Settings/Language/Language.h" "src/engine/Utilities/FileSystem.h" "src/engine/Utilities/FileSystem.cpp" "src/engine/Render/Window/TextEditor.cpp" "src/engine/Utilities/ConsoleLog.cpp" "src/engine/Utilities/ConsoleLog.h")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET "Geekpiz_Editor_1.0" PROPERTY CXX_STANDARD 20)
@@ -37,12 +37,13 @@ set(IMGUI_SOURCES
 )
 
 # Creating the Im Gui Library(imgui 라이브러리 만들기)
-add_library(imgui ${IMGUI_SOURCES})
+add_library(imgui ${IMGUI_SOURCES} "src/engine/Render/Window/TextEditor.cpp" "src/engine/Utilities/ConsoleLog.cpp" "src/engine/Utilities/ConsoleLog.h")
 
 target_include_directories(imgui PRIVATE
     libs/ImGui
     libs/ImGui/backends
     libs/glfw/include
+    libs/ImGuiColorTextEdit
 )
 
 # Tell me where the header file is located(헤더 파일 위치 알려주기)

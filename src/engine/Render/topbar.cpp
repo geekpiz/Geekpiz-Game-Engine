@@ -42,7 +42,8 @@ namespace RenderEditer {
                     if (ImGui::MenuItem(L::Get("Assets").c_str(), "Alt + 5")) { Window::render_Assets = true; }
                     ImGui::Separator();
                     if (ImGui::MenuItem(L::Get("Console").c_str(), "Alt + 6")) { Window::render_Console = true; }
-
+                    ImGui::Separator();
+                    if (ImGui::MenuItem(L::Get("Text Editor").c_str(), "Alt + 7")) { Window::render_TextEditor = true; }
                     ImGui::EndMenu();
                 }
 

@@ -29,13 +29,20 @@ namespace RenderEditer {
 
         // Load colors inside function to prevent crash (크래시 방지를 위해 함수 내부에서 색상 로드)
         unsigned int MainColor1 = Settings::GetColor("MainColor1", 0x2D2D2D);
+        unsigned int MainColor2 = Settings::GetColor("MainColor2", 0x1C1C1C);
+
         unsigned int ChildBgColor = Settings::GetColor("ChildBgColor", 0x151515);
+
         unsigned int SubColor1 = Settings::GetColor("SubColor1", 0x121212);
+        unsigned int SubColor2 = Settings::GetColor("SubColor2", 0x262829);
+
+        unsigned int TextColor1 = Settings::GetColor("TextColor1", 0xFFFFFF);
         unsigned int TextColor2 = Settings::GetColor("TextColor2", 0x808080);
+
         unsigned int FrameBgColor = Settings::GetColor("FrameBgColor", 0x252525);
         unsigned int ButtonColor = Settings::GetColor("ButtonColor", 0x303030);
         unsigned int HoveredColor = Settings::GetColor("HoveredColor", 0x333333);
-        unsigned int SubColor2 = Settings::GetColor("SubColor2", 0x262829);
+
 
         style.WindowRounding = 0.0f;
         style.FrameRounding = 0.0f;
@@ -73,21 +80,6 @@ namespace RenderEditer {
         colors[ImGuiCol_ScrollbarBg] = GetImColor(SubColor1);
         colors[ImGuiCol_ScrollbarGrab] = GetImColor(ButtonColor);
         colors[ImGuiCol_Separator] = GetImColor(SubColor1);
-    }
-
-    // 2. Custom Editor Style (Geekpiz 엔진 전용 커스텀 스타일)
-    void ApplyCustomEngineStyle() {
-        ImGuiStyle& style = ImGui::GetStyle();
-        ImVec4* colors = style.Colors;
-
-        // Load colors inside function to prevent crash (크래시 방지를 위해 함수 내부에서 색상 로드)
-        unsigned int MainColor1 = Settings::GetColor("MainColor1", 0x2D2D2D);
-        unsigned int MainColor2 = Settings::GetColor("MainColor2", 0x1C1C1C);
-        unsigned int SubColor2 = Settings::GetColor("SubColor2", 0x262829);
-        unsigned int HoveredColor = Settings::GetColor("HoveredColor", 0x333333);
-        unsigned int SubColor1 = Settings::GetColor("SubColor1", 0x121212);
-        unsigned int TextColor1 = Settings::GetColor("TextColor1", 0xFFFFFF);
-        unsigned int FrameBgColor = Settings::GetColor("FrameBgColor", 0x252525);
 
         // Window & Frame Padding (탑바 위아래 두께 및 여백 대폭 확장)
         style.WindowPadding = ImVec2(8, 8);
@@ -118,6 +110,9 @@ namespace RenderEditer {
 
         unsigned int DockPreviewColor = Settings::GetColor("SubColor2", 0x262829);
         colors[ImGuiCol_DockingPreview] = GetImColor(DockPreviewColor, 0.5f);
+
+        unsigned int SeparatorColor = Settings::GetColor("SubColor2", 0x262829); // 0xFF8C00은 주황색
+        colors[ImGuiCol_Separator] = GetImColor(SeparatorColor);
 
     }
 }

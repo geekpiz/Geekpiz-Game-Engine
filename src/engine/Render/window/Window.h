@@ -12,6 +12,7 @@ namespace Window {
 	extern bool render_Game;
 	extern bool render_Console;
 	extern bool render_Assets;
+	extern bool render_TextEditor;
 
 
 	//Function(함수)
@@ -21,4 +22,5 @@ namespace Window {
 	void Render_Hierarchy();
 	void Render_Inspector();
 	void Render_Scene();
+	void Render_TextEditor();
 }
