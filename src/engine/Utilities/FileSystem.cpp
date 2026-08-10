@@ -1,9 +1,25 @@
 #include "FileSystem.h"
 #include <fstream>
+#include <sstream>
 #include <cstdlib>
+// BUG FIX: <sstream> was never included even though ReadFile() uses
+// std::stringstream. It happened to compile before only because some
+// standard library implementations pull it in transitively through
+// <fstream> - that isn't guaranteed (MSVC/VS2026 in particular), so this
+// could fail to compile depending on STL internals changing.
+// (<sstream>이 빠져 있었음. ReadFile()에서 std::stringstream을 쓰는데도
+//  <fstream>이 내부적으로 <sstream>을 우연히 포함해서 지금까지 컴파일된
+//  것뿐, 표준이 보장하는 동작이 아님. MSVC/VS2026 등에서는 STL 내부
+//  구현이 조금만 달라져도 컴파일 실패할 수 있는 잠재적 버그였음)
 
 // Include system headers for Unix-like systems (유닉스 계열 시스템용 시스템 헤더 포함)
-#if defined(__linux__) || defined(__apple__)
+// BUG FIX: __apple__ is not a real predefined macro (the correct one is
+// __APPLE__, all caps) - as written this branch could never be taken on
+// macOS, silently falling through to the Linux branch instead.
+// (__apple__은 실제로 존재하는 매크로가 아님 - 올바른 이름은 __APPLE__
+//  (전부 대문자). 원래 코드대로면 macOS에서도 이 분기를 절대 타지 못하고
+//  조용히 리눅스 분기로 빠짐)
+#if defined(__linux__) || defined(__APPLE__)
 #include <unistd.h>
 #include <pwd.h>
 #endif
@@ -21,7 +37,7 @@ namespace FS {
             return fs::path(appData);
         }
         return fs::path(std::getenv("USERPROFILE")) / "AppData" / "Local";
-#elif defined(__apple__)
+#elif defined(__APPLE__)
         // macOS Application Support path (맥 OS Application Support 경로)
         char* home = std::getenv("HOME");
         if (!home) {

@@ -73,6 +73,8 @@ void TextEditor::SetPalette(const Palette & aValue)
 	mPaletteBase = aValue;
 }
 
+
+
 std::string TextEditor::GetText(const Coordinates & aStart, const Coordinates & aEnd) const
 {
 	std::string result;
@@ -110,10 +112,6 @@ std::string TextEditor::GetText(const Coordinates & aStart, const Coordinates & 
 	return result;
 }
 
-TextEditor::Coordinates TextEditor::GetActualCursorCoordinates() const
-{
-	return SanitizeCoordinates(mState.mCursorPosition);
-}
 
 TextEditor::Coordinates TextEditor::SanitizeCoordinates(const Coordinates & aValue) const
 {
@@ -325,13 +323,51 @@ TextEditor::Coordinates TextEditor::ScreenPosToCoordinates(const ImVec2& aPositi
 	ImVec2 origin = ImGui::GetCursorScreenPos();
 	ImVec2 local(aPosition.x - origin.x, aPosition.y - origin.y);
 
-	int lineNo = std::max(0, (int)floor(local.y / mCharAdvance.y));
+	// 폴드를 고려하여 실제 줄 번호 계산
+	int displayLineNo = std::max(0, (int)floor(local.y / mCharAdvance.y));
+	int actualLineNo = -1;
+	int lastVisibleLineNo = 0; // 클릭이 마지막 줄보다 아래에서 일어났을 때를 대비한 대체값 (fallback for clicks below the last line)
+	int renderedCount = 0;
+
+	// 렌더링된 줄을 기준으로 실제 줄 번호 매핑
+	for (int i = 0; i < (int)mLines.size(); ++i)
+	{
+		bool isHidden = false;
+		for (int foldedLine : mFoldedLines)
+		{
+			int endLine = GetFoldEndLine(foldedLine);
+			if (i > foldedLine && i <= endLine)
+			{
+				isHidden = true;
+				break;
+			}
+		}
+
+		if (!isHidden)
+		{
+			lastVisibleLineNo = i;
+			if (renderedCount == displayLineNo)
+			{
+				actualLineNo = i;
+				break;
+			}
+			renderedCount++;
+		}
+	}
+
+	// BUG FIX: if the click landed below the last rendered line (e.g. clicking in
+	// the empty space under a short file), the loop above never finds a match and
+	// actualLineNo used to stay at its default of 0, snapping the cursor back to
+	// the very first line instead of the last one. (마지막 줄보다 아래의 빈 공간을
+	// 클릭하면 actualLineNo가 기본값 0에 머물러 커서가 맨 윗줄로 튀던 문제 수정)
+	if (actualLineNo < 0)
+		actualLineNo = lastVisibleLineNo;
 
 	int columnCoord = 0;
 
-	if (lineNo >= 0 && lineNo < (int)mLines.size())
+	if (actualLineNo >= 0 && actualLineNo < (int)mLines.size())
 	{
-		auto& line = mLines.at(lineNo);
+		auto& line = mLines.at(actualLineNo);
 
 		int columnIndex = 0;
 		float columnX = 0.0f;
@@ -369,7 +405,7 @@ TextEditor::Coordinates TextEditor::ScreenPosToCoordinates(const ImVec2& aPositi
 		}
 	}
 
-	return SanitizeCoordinates(Coordinates(lineNo, columnCoord));
+	return SanitizeCoordinates(Coordinates(actualLineNo, columnCoord));
 }
 
 TextEditor::Coordinates TextEditor::FindWordStart(const Coordinates & aFrom) const
@@ -596,6 +632,18 @@ void TextEditor::RemoveLine(int aStart, int aEnd)
 	}
 	mBreakpoints = std::move(btmp);
 
+	// Adjust code-folding line indices after the line range is removed.
+	{
+		std::set<int> ftmp;
+		for (int line : mFoldedLines)
+		{
+			if (line >= aStart && line < aEnd)
+				continue;
+			ftmp.insert(line >= aEnd ? line - (aEnd - aStart) : line);
+		}
+		mFoldedLines = std::move(ftmp);
+	}
+
 	mLines.erase(mLines.begin() + aStart, mLines.begin() + aEnd);
 	assert(!mLines.empty());
 
@@ -626,6 +674,18 @@ void TextEditor::RemoveLine(int aIndex)
 	}
 	mBreakpoints = std::move(btmp);
 
+	// Adjust code-folding line indices after a single line is removed.
+	{
+		std::set<int> ftmp;
+		for (int line : mFoldedLines)
+		{
+			if (line == aIndex)
+				continue;
+			ftmp.insert(line > aIndex ? line - 1 : line);
+		}
+		mFoldedLines = std::move(ftmp);
+	}
+
 	mLines.erase(mLines.begin() + aIndex);
 	assert(!mLines.empty());
 
@@ -647,6 +707,14 @@ TextEditor::Line& TextEditor::InsertLine(int aIndex)
 	for (auto i : mBreakpoints)
 		btmp.insert(i >= aIndex ? i + 1 : i);
 	mBreakpoints = std::move(btmp);
+
+	// Shift folded line indices to match the inserted line.
+	{
+		std::set<int> ftmp;
+		for (int line : mFoldedLines)
+			ftmp.insert(line >= aIndex ? line + 1 : line);
+		mFoldedLines = std::move(ftmp);
+	}
 
 	return result;
 }
@@ -850,8 +918,23 @@ void TextEditor::HandleMouseInputs()
 	}
 }
 
-void TextEditor::Render()
+void TextEditor::Render(const char* aTitle, const ImVec2& aSize, bool aBorder)
 {
+	// Reset per-frame change flags at the start of Render (프레임마다 변경 플래그 초기화)
+	// BUG FIX: these were previously never reset to false anywhere, so once the
+	// text changed a single time, IsTextChanged() kept returning true forever.
+	// That made the caller (Render_CodeEditor) re-run CheckSyntaxFull() every
+	// single frame, spamming the console with error logs every second.
+	// (기존 코드는 mTextChanged를 false로 되돌리는 곳이 전혀 없어서, 텍스트가
+	// 한 번이라도 바뀌면 그 이후 모든 프레임에서 IsTextChanged()가 true를 반환했음.
+	// 그 결과 CheckSyntaxFull()이 매 프레임 호출되어 콘솔에 에러 로그가 초마다 계속 찍혔음.)
+	mTextChanged = false;
+	mCursorPositionChanged = false;
+
+	/* Update syntax highlighting (구문 강조 업데이트) */
+	if (mCheckComments)
+		ColorizeInternal();
+
 	/* Compute mCharAdvance regarding to scaled font size (Ctrl + mouse wheel)*/
 	const float fontSize = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, "#", nullptr, nullptr).x;
 	mCharAdvance = ImVec2(fontSize, ImGui::GetTextLineHeightWithSpacing() * mLineSpacing);
@@ -887,15 +970,79 @@ void TextEditor::Render()
 	// Deduce mTextStart by evaluating mLines size (global lineMax) plus two spaces as text width
 	char buf[16];
 	snprintf(buf, 16, " %d ", globalLineMax);
-	mTextStart = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, buf, nullptr, nullptr).x + mLeftMargin;
+	// BUG FIX: mTextStart previously only reserved room for the left margin + the
+	// line number text, but the fold icon "[+]"/"[-]" was drawn at mLeftMargin too
+	// (the SAME x position as the line number's left edge), so the fold icon and
+	// line number were always drawn on top of each other. And because mTextStart
+	// (where the actual code text starts) didn't account for the fold icon either,
+	// widening the layout to avoid that overlap would have just pushed the fold
+	// icon into the code text area instead. Reserving a dedicated width for the
+	// fold icon here fixes both overlaps at once.
+	// (mTextStart는 왼쪽 여백 + 줄 번호 텍스트만 고려했는데, 폴딩 아이콘도 같은
+	// mLeftMargin 위치에 그려지고 있어서 줄 번호와 항상 겹쳤음. 또한 mTextStart가
+	// 폴딩 아이콘 폭을 전혀 감안하지 않다 보니, 겹침을 피하려 위치를 옮기면 이번엔
+	// 코드 텍스트 영역과 겹치게 됨. 폴딩 아이콘 전용 폭을 따로 예약해서 두 겹침을
+	// 모두 해결.)
+	float foldAreaWidth = 0.0f;
+	if (mFoldingEnabled)
+		foldAreaWidth = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, "[+] ", nullptr, nullptr).x;
+	mTextStart = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, buf, nullptr, nullptr).x + mLeftMargin + foldAreaWidth;
 
 	if (!mLines.empty())
 	{
 		float spaceSize = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, " ", nullptr, nullptr).x;
+		float screenLineNo = 0.0f; // 렌더링된 줄 번호 (폴드를 고려한 실제 화면상 위치)
+
+		// 초기 lineNo를 폴드를 고려하여 조정 (scrollY에 해당하는 실제 줄 찾기)
+		int actualStartLineNo = 0;
+		int renderedCount = 0;
+		for (int i = 0; i < (int)mLines.size(); ++i)
+		{
+			bool isHidden = false;
+			for (int foldedLine : mFoldedLines)
+			{
+				int endLine = GetFoldEndLine(foldedLine);
+				if (i > foldedLine && i <= endLine)
+				{
+					isHidden = true;
+					break;
+				}
+			}
+
+			if (!isHidden)
+			{
+				if (renderedCount >= lineNo)
+				{
+					actualStartLineNo = i;
+					break;
+				}
+				renderedCount++;
+			}
+		}
+		lineNo = actualStartLineNo;
 
 		while (lineNo <= lineMax)
 		{
-			ImVec2 lineStartScreenPos = ImVec2(cursorScreenPos.x, cursorScreenPos.y + lineNo * mCharAdvance.y);
+			// Check if this line is hidden due to code folding (코드 접기로 인해 이 라인이 숨겨져 있는지 확인)
+			bool isLineHidden = false;
+			for (int foldedLine : mFoldedLines)
+			{
+				int endLine = GetFoldEndLine(foldedLine);
+				if (lineNo > foldedLine && lineNo <= endLine)
+				{
+					isLineHidden = true;
+					break;
+				}
+			}
+
+			if (isLineHidden)
+			{
+				lineNo++;
+				continue;
+			}
+
+			// 실제 렌더링된 위치로 Y 좌표 계산 (폴드를 고려)
+			ImVec2 lineStartScreenPos = ImVec2(cursorScreenPos.x, cursorScreenPos.y + screenLineNo * mCharAdvance.y);
 			ImVec2 textScreenPos = ImVec2(lineStartScreenPos.x + mTextStart, lineStartScreenPos.y);
 
 			auto& line = mLines[lineNo];
@@ -954,11 +1101,54 @@ void TextEditor::Render()
 				}
 			}
 
-			// Draw line number (right aligned)
-			snprintf(buf, 16, "%d  ", lineNo + 1);
+			// Draw code folding button first (before line number) (코드 접기 버튼을 라인 번호 왼쪽에 렌더링)
+			if (mFoldingEnabled && HasFoldStart(lineNo))
+			{
+				bool isFolded = mFoldedLines.count(lineNo) > 0;
+				const char* foldIcon = isFolded ? "[+]" : "[-]";
+				ImU32 foldColor = mPalette[(int)PaletteIndex::Number];
 
-			auto lineNoWidth = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, buf, nullptr, nullptr).x;
-			drawList->AddText(ImVec2(lineStartScreenPos.x + mTextStart - lineNoWidth, lineStartScreenPos.y), mPalette[(int)PaletteIndex::LineNumber], buf);
+				// Position fold button to the left of line number (라인 번호 왼쪽에 배치)
+				ImVec2 foldIconSize = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, foldIcon);
+				ImVec2 foldPos = ImVec2(lineStartScreenPos.x + mLeftMargin, lineStartScreenPos.y);
+
+				// Fold icon background and hover area
+				ImVec2 foldBgStart = ImVec2(foldPos.x - 2.0f, lineStartScreenPos.y);
+				ImVec2 foldBgEnd = ImVec2(foldPos.x + foldIconSize.x + 2.0f, lineStartScreenPos.y + mCharAdvance.y);
+
+				// Mouse hover effect
+				if (ImGui::IsMousePosValid())
+				{
+					ImVec2 mousePos = ImGui::GetMousePos();
+					if (mousePos.y >= lineStartScreenPos.y && mousePos.y < lineStartScreenPos.y + mCharAdvance.y &&
+						mousePos.x >= foldBgStart.x && mousePos.x < foldBgEnd.x)
+					{
+						drawList->AddRectFilled(foldBgStart, foldBgEnd, ImGui::GetColorU32(ImVec4(0.3f, 0.3f, 0.3f, 0.4f)));
+
+						// Change icon color on hover
+						foldColor = mPalette[(int)PaletteIndex::Keyword];
+
+						// Mouse click handling
+						if (ImGui::IsMouseClicked(0))
+						{
+							if (isFolded)
+								mFoldedLines.erase(lineNo);
+							else
+								mFoldedLines.insert(lineNo);
+						}
+					}
+				}
+
+				drawList->AddText(foldPos, foldColor, foldIcon);
+			}
+
+			// Draw line number (right aligned) and code folding button
+			char buf2[16];
+			snprintf(buf2, 16, "%d  ", lineNo + 1);
+
+			auto lineNoWidth = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, buf2, nullptr, nullptr).x;
+			ImVec2 lineNoPos = ImVec2(lineStartScreenPos.x + mTextStart - lineNoWidth, lineStartScreenPos.y);
+			drawList->AddText(lineNoPos, mPalette[(int)PaletteIndex::LineNumber], buf2);
 
 			if (mState.mCursorPosition.mLine == lineNo)
 			{
@@ -1077,6 +1267,7 @@ void TextEditor::Render()
 			}
 
 			++lineNo;
+			++screenLineNo; // 렌더링된 줄 번호도 증가 (폴드된 줄은 건너뛰므로 lineNo와 다를 수 있음)
 		}
 
 		// Draw a tooltip on known identifiers/preprocessor symbols
@@ -1107,7 +1298,42 @@ void TextEditor::Render()
 	}
 
 
-	ImGui::Dummy(ImVec2((longest + 2), mLines.size() * mCharAdvance.y));
+	// Dummy 크기를 렌더링된 줄 수로 계산 (폴드를 고려)
+	int renderedLineCount = 0;
+	for (int i = 0; i < (int)mLines.size(); ++i)
+	{
+		bool isHidden = false;
+		for (int foldedLine : mFoldedLines)
+		{
+			int endLine = GetFoldEndLine(foldedLine);
+			if (i > foldedLine && i <= endLine)
+			{
+				isHidden = true;
+				break;
+			}
+		}
+		if (!isHidden)
+			renderedLineCount++;
+	}
+
+	// Handle keyboard and mouse inputs (키보드 및 마우스 입력 처리)
+	// BUG FIX: this used to run AFTER ImGui::Dummy() below. Dummy() advances
+	// ImGui's internal layout cursor by the full content height, so by the time
+	// HandleMouseInputs() called ScreenPosToCoordinates() -> ImGui::GetCursorScreenPos(),
+	// the "origin" no longer matched the top-left position the text lines were
+	// actually drawn from. That mismatch made local.y come out far too negative
+	// for most clicks, so the computed line always clamped to line 0 - in effect,
+	// clicking below the current cursor line never worked correctly.
+	// (Dummy()는 ImGui 레이아웃 커서를 콘텐츠 전체 높이만큼 아래로 이동시키는데,
+	// 마우스 입력 처리가 그 뒤에서 GetCursorScreenPos()를 호출하면 실제 텍스트가
+	// 그려진 기준점과 어긋나 버림. 그래서 클릭한 위치가 항상 맨 윗줄(0번 줄) 근처로
+	// 잘못 계산되어, 커서보다 아래쪽을 클릭해도 그 위치로 이동하지 못했음.)
+	if (mHandleKeyboardInputs)
+		HandleKeyboardInputs();
+	if (mHandleMouseInputs)
+		HandleMouseInputs();
+
+	ImGui::Dummy(ImVec2((longest + 2), renderedLineCount * mCharAdvance.y));
 
 	if (mScrollToCursor)
 	{
@@ -1117,44 +1343,10 @@ void TextEditor::Render()
 	}
 }
 
-void TextEditor::Render(const char* aTitle, const ImVec2& aSize, bool aBorder)
-{
-	mWithinRender = true;
-	mTextChanged = false;
-	mCursorPositionChanged = false;
-
-	ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertU32ToFloat4(mPalette[(int)PaletteIndex::Background]));
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
-	if (!mIgnoreImGuiChild)
-		ImGui::BeginChild(aTitle, aSize, aBorder, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_NoMove);
-
-	if (mHandleKeyboardInputs)
-	{
-		HandleKeyboardInputs();
-		ImGui::PushItemFlag(ImGuiItemFlags_NoTabStop, false);
-	}
-
-	if (mHandleMouseInputs)
-		HandleMouseInputs();
-
-	ColorizeInternal();
-	Render();
-
-	if (mHandleKeyboardInputs)
-		ImGui::PopItemFlag();
-
-	if (!mIgnoreImGuiChild)
-		ImGui::EndChild();
-
-	ImGui::PopStyleVar();
-	ImGui::PopStyleColor();
-
-	mWithinRender = false;
-}
-
 void TextEditor::SetText(const std::string & aText)
 {
 	mLines.clear();
+	mFoldedLines.clear();
 	mLines.emplace_back(Line());
 	for (auto chr : aText)
 	{
@@ -1182,6 +1374,7 @@ void TextEditor::SetText(const std::string & aText)
 void TextEditor::SetTextLines(const std::vector<std::string> & aLines)
 {
 	mLines.clear();
+	mFoldedLines.clear();
 
 	if (aLines.empty())
 	{
@@ -2210,7 +2403,26 @@ void TextEditor::ColorizeRange(int aFromLine, int aToLine)
 			}
 			else
 			{
-				const size_t token_length = token_end - token_begin;
+				// A language tokenizer/regex must return a valid, non-empty range
+				// inside [bufferBegin, bufferEnd). Guard it so a bad result cannot
+				// corrupt mLines and later crash inside an STL container.
+				if (token_begin == nullptr || token_end == nullptr ||
+					token_begin < bufferBegin || token_begin > bufferEnd ||
+					token_end < token_begin || token_end > bufferEnd ||
+					token_begin == token_end)
+				{
+					++first;
+					continue;
+				}
+
+				const size_t tokenOffset = static_cast<size_t>(token_begin - bufferBegin);
+				const size_t token_length = static_cast<size_t>(token_end - token_begin);
+
+				if (tokenOffset >= line.size() || token_length > line.size() - tokenOffset)
+				{
+					++first;
+					continue;
+				}
 
 				if (token_color == PaletteIndex::Identifier)
 				{
@@ -2237,7 +2449,7 @@ void TextEditor::ColorizeRange(int aFromLine, int aToLine)
 				}
 
 				for (size_t j = 0; j < token_length; ++j)
-					line[(token_begin - bufferBegin) + j].mColorIndex = token_color;
+					line[tokenOffset + j].mColorIndex = token_color;
 
 				first = token_end;
 			}
@@ -2263,9 +2475,16 @@ void TextEditor::ColorizeInternal()
 		auto concatenate = false;		// '\' on the very end of the line
 		auto currentLine = 0;
 		auto currentIndex = 0;
-		while (currentLine < endLine || currentIndex < endIndex)
+		while (currentLine < endLine)
 		{
 			auto& line = mLines[currentLine];
+
+			if (currentIndex < 0 || currentIndex >= static_cast<int>(line.size()))
+			{
+				currentIndex = 0;
+				++currentLine;
+				continue;
+			}
 
 			if (currentIndex == 0 && !concatenate)
 			{
@@ -3156,4 +3375,78 @@ const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::Lua()
 		inited = true;
 	}
 	return langDef;
+} // <-- 여기에 닫는 중괄호(})가 추가됨!
+
+// 1. GetActualCursorCoordinates 구현 (클래스 내부 선언과 일치)
+TextEditor::Coordinates TextEditor::GetActualCursorCoordinates() const
+{
+	return SanitizeCoordinates(mState.mCursorPosition);
+}
+
+// 2. Code Folding Helper Functions
+bool TextEditor::HasFoldStart(int aLine) const
+{
+	if (aLine < 0 || aLine >= (int)mLines.size()) return false;
+	const auto& line = mLines[aLine];
+	// 라인의 마지막 '{'를 찾기 (주석 제외)
+	for (int i = (int)line.size() - 1; i >= 0; --i)
+	{
+		const auto& glyph = line[i];
+		if (glyph.mChar == '{' && !glyph.mComment && !glyph.mMultiLineComment)
+			return true;
+		else if (glyph.mChar == '}' && !glyph.mComment && !glyph.mMultiLineComment)
+			return false; // '}' 이후의 '{'는 무시
+	}
+	return false;
+}
+
+int TextEditor::GetFoldEndLine(int aStartLine) const
+{
+	if (aStartLine < 0 || aStartLine >= (int)mLines.size())
+		return aStartLine;
+
+	int scopeDepth = 0;
+	bool foundStart = false;
+
+	// aStartLine에서 '{'의 첫 번째 위치를 찾기
+	const auto& startLine = mLines[aStartLine];
+	for (const auto& glyph : startLine)
+	{
+		if (glyph.mChar == '{' && !glyph.mComment && !glyph.mMultiLineComment)
+		{
+			scopeDepth++;
+			foundStart = true;
+		}
+		else if (glyph.mChar == '}' && !glyph.mComment && !glyph.mMultiLineComment)
+		{
+			scopeDepth--;
+		}
+	}
+
+	if (!foundStart)
+		return aStartLine; // '{' 없으면 원래 라인 반환
+
+	// aStartLine 다음부터 matching '}' 찾기
+	for (int i = aStartLine + 1; i < (int)mLines.size(); ++i)
+	{
+		const auto& line = mLines[i];
+		for (const auto& glyph : line)
+		{
+			if (glyph.mComment || glyph.mMultiLineComment) continue;
+
+			if (glyph.mChar == '{')
+			{
+				scopeDepth++;
+			}
+			else if (glyph.mChar == '}')
+			{
+				scopeDepth--;
+				if (scopeDepth == 0)
+				{
+					return i;
+				}
+			}
+		}
+	}
+	return (int)mLines.size() - 1; // 끝까지 찾지 못하면 마지막 라인 반환
 }

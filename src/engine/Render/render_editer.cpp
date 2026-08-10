@@ -44,5 +44,6 @@ namespace RenderEditer
         Window::Render_Hierarchy();
         Window::Render_Inspector();
         Window::Render_Scene();
+        Window::Render_CodeEditor();
 	}
 }

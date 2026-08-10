@@ -1,8 +1,8 @@
 #pragma once
 
 #include "ImGui.h"
-#include "../../Settings/Settings.h"
-#include "../../Settings/Language/Language.h"
+#include "Settings.h"
+#include "Language/Language.h"
 
 namespace Window {
 	//Variable(변수)
@@ -12,7 +12,7 @@ namespace Window {
 	extern bool render_Game;
 	extern bool render_Console;
 	extern bool render_Assets;
-	extern bool render_TextEditor;
+	extern bool render_CodeEditor;
 
 
 	//Function(함수)
@@ -22,5 +22,9 @@ namespace Window {
 	void Render_Hierarchy();
 	void Render_Inspector();
 	void Render_Scene();
-	void Render_TextEditor();
+	void Render_CodeEditor();
+
+	// Release the Code Editor's Squirrel VM (called once on engine shutdown)
+	// (코드 에디터의 스쿼럴 VM 해제 - 엔진 종료 시 한 번 호출)
+	void ShutdownCodeEditor();
 }

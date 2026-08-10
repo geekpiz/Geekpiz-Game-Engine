@@ -3,14 +3,17 @@
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 #include "engine/Render/Render.h"
+#include "engine/Render/Window/Window.h"
 #include "engine/Settings/Settings.h"
 #include "engine/Settings/Language/Language.h"
 #include "engine/Utilities/ConsoleLog.h"
+#include "engine/Settings/Language/FontLoader.h"
 
 GLFWwindow* g_Window = nullptr;
 
 int main()
 {
+
     Settings::Load();
 	L::Load();
     if (!glfwInit()) return -1;
@@ -36,21 +39,16 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(g_Window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
     RenderEditer::ApplyUnityStyle();
+    ImFont* myFontW =  FontLoader::Load(Settings::Get("font_name"));
 
-    // --- Info 출력 3개 (같은 거 2개, 다른 거 1개) ---
-    ConsoleLog::Append(LogLevel::Info, "Engine initialization sequence started.");
-    ConsoleLog::Append(LogLevel::Info, "Engine initialization sequence started.");
-    ConsoleLog::Append(LogLevel::Info, "Loaded main scene configuration successfully.");
+    // Explicitly select the loaded font as the UI's default font, and warn (don't fail silently) if it's missing
+    // (로드된 폰트를 UI 기본 폰트로 명시적으로 지정. 실패해도 조용히 넘어가지 않고 경고 로그를 남김)
+    if (myFontW) {
+        io.FontDefault = myFontW;
+    } else {
+        ConsoleLog::Append(LogLevel::Warning, "Custom font load failed, using ImGui's built-in font (한글 텍스트가 네모(tofu)로 보일 수 있음)");
+    }
 
-    // --- Warning 출력 3개 (같은 거 2개, 다른 거 1개) ---
-    ConsoleLog::Append(LogLevel::Warning, "Texture asset missing metadata, using fallback.");
-    ConsoleLog::Append(LogLevel::Warning, "Texture asset missing metadata, using fallback.");
-    ConsoleLog::Append(LogLevel::Warning, "Audio device buffer size is lower than recommended.");
-
-    // --- Error 출력 3개 (같은 거 2개, 다른 거 1개) ---
-    ConsoleLog::Append(LogLevel::Error, "Failed to load fragment shader file: 'default.frag'.");
-    ConsoleLog::Append(LogLevel::Error, "Failed to load fragment shader file: 'default.frag'.");
-    ConsoleLog::Append(LogLevel::Error, "Null pointer exception encountered in physics update loop.");
 
     // Main Loop(메인 루프)
     while (!glfwWindowShouldClose(g_Window))
@@ -74,6 +72,12 @@ int main()
     }
 
     // Cleanup(종료 처리)
+    // BUG FIX: releases the Code Editor's Squirrel VM (see Code_Editor.cpp /
+    // ShutdownCodeEditor for details on the leak this fixes).
+    // (코드 에디터의 스쿼럴 VM을 해제함 - 어떤 누수를 고치는지는
+    //  Code_Editor.cpp의 ShutdownCodeEditor 참고)
+    Window::ShutdownCodeEditor();
+
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();

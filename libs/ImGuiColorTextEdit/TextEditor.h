@@ -3,9 +3,9 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <cstdint>
+#include <set>
 #include <memory>
-#include <unordered_set>
-#include <unordered_map>
 #include <map>
 #include <regex>
 #include "imgui.h"
@@ -126,10 +126,10 @@ public:
 	};
 
 	typedef std::string String;
-	typedef std::unordered_map<std::string, Identifier> Identifiers;
-	typedef std::unordered_set<std::string> Keywords;
+	typedef std::map<std::string, Identifier> Identifiers;
+	typedef std::set<std::string> Keywords;
 	typedef std::map<int, std::string> ErrorMarkers;
-	typedef std::unordered_set<int> Breakpoints;
+	typedef std::set<int> Breakpoints;
 	typedef std::array<ImU32, (unsigned)PaletteIndex::Max> Palette;
 	typedef uint8_t Char;
 
@@ -192,6 +192,7 @@ public:
 	void SetPalette(const Palette& aValue);
 
 	void SetErrorMarkers(const ErrorMarkers& aMarkers) { mErrorMarkers = aMarkers; }
+	const ErrorMarkers& GetErrorMarkers() const { return mErrorMarkers; }
 	void SetBreakpoints(const Breakpoints& aMarkers) { mBreakpoints = aMarkers; }
 
 	void Render(const char* aTitle, const ImVec2& aSize = ImVec2(), bool aBorder = false);
@@ -229,6 +230,10 @@ public:
 
 	inline void SetShowWhitespaces(bool aValue) { mShowWhitespaces = aValue; }
 	inline bool IsShowingWhitespaces() const { return mShowWhitespaces; }
+
+	// Code folding
+	inline void SetFoldingEnabled(bool aValue) { mFoldingEnabled = aValue; }
+	inline bool IsFoldingEnabled() const { return mFoldingEnabled; }
 
 	void SetTabSize(int aValue);
 	inline int GetTabSize() const { return mTabSize; }
@@ -386,4 +391,10 @@ private:
 	uint64_t mStartTime;
 
 	float mLastClick;
+
+	bool HasFoldStart(int aLine) const;
+	int GetFoldEndLine(int aStartLine) const;
+
+	bool mFoldingEnabled = true;
+	std::set<int> mFoldedLines;
 };
