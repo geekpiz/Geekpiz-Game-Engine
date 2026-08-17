@@ -62,8 +62,22 @@ namespace Window {
     {
         if (!render_Console) return;
 
-        // Multi-language window title (다국어화 창 제목 적용)
-        ImGui::Begin(L::Get("Console").c_str(), &render_Console);
+        // BUG FIX: unlike the Code Editor's settings popup (already fixed
+        // previously), this window never checked ImGui::Begin()'s return
+        // value, so the whole log list, filter buttons, and slider kept
+        // being rebuilt every frame even while the window was collapsed.
+        // On an 8GB RAM / 1GB VRAM machine that's wasted CPU work piling up
+        // for a panel the user isn't even looking at.
+        // (BUG FIX: 이미 고쳤던 코드 에디터의 설정 팝업과 달리, 이 창은
+        //  ImGui::Begin()의 반환값을 확인하지 않아서 창이 접혀있어도 로그
+        //  목록, 필터 버튼, 슬라이더가 매 프레임 계속 다시 그려지고 있었음.
+        //  8GB RAM / 1GB VRAM 환경에서는 보고 있지도 않은 패널을 위해
+        //  불필요한 CPU 작업이 계속 쌓이는 셈)
+        if (!ImGui::Begin(L::Get("Console").c_str(), &render_Console))
+        {
+            ImGui::End();
+            return;
+        }
 
         // --- 1. Left Controls (좌측 컨트롤 툴바) ---
         // Clear button with localized text (다국어 적용 Clear 버튼)

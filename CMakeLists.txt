@@ -41,6 +41,8 @@ set(ENGINE_SOURCES
     "src/engine/Utilities/ConsoleLog.h"
     "src/engine/Settings/Language/FontLoader.h"
     "src/engine/Settings/Language/FontLoader.cpp"
+    "src/engine/Layout/Layout.h"
+    "src/engine/Layout/Layout.cpp"
     "libs/ImGuiColorTextEdit/TextEditor.h"
     "libs/ImGuiColorTextEdit/TextEditor.cpp"
     "src/core/Script/ScriptPreprocessor.h"

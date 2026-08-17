@@ -12,4 +12,11 @@ namespace FS {
 
     // Write a string content to a file (문자열 내용을 파일에 쓰기)
     bool WriteFile(const std::string& relativePath, const std::string& content);
+
+    // Delete a file if it exists. Returns true if the file is gone
+    // afterwards (including when it never existed to begin with), false
+    // only on an actual filesystem error. Used by named-layout deletion.
+    // (파일이 있으면 삭제함. 삭제 후 파일이 없으면 true(원래 없었던 경우
+    //  포함), 실제 파일시스템 오류일 때만 false. 이름 있는 레이아웃 삭제에 사용됨)
+    bool DeleteFile(const std::string& relativePath);
 }

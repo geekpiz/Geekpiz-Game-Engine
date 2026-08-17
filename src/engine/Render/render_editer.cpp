@@ -1,10 +1,12 @@
 #include "imgui.h"
 #include "Render.h"
 #include "window\Window.h"
+#include "../Layout/Layout.h"
 
 namespace RenderEditer
 {
     bool window = true;
+    ImGuiID g_MainDockspaceId = 0; // See Render.h for why this is exposed (공개 이유는 Render.h 참고)
 
     // Docking Space Settings(도킹 스페이스 설정)
     void SetupDockSpace()
@@ -30,7 +32,15 @@ namespace RenderEditer
         ImGui::PopStyleVar(3);
 
         ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+        g_MainDockspaceId = dockspace_id;
         ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+
+        // Builds the default layout on the very first frame of a fresh
+        // install only - every other frame this is a cheap early-out
+        // (신규 설치 시 첫 프레임에만 기본 레이아웃을 만듦 - 그 외에는
+        //  바로 리턴하는 가벼운 호출)
+        Layout::Update(dockspace_id);
+
         ImGui::End();
     }
 

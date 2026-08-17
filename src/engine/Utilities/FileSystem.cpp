@@ -101,4 +101,17 @@ namespace FS {
         file << content;
         return true; // Return true on successful write (쓰기 성공 시 true 반환)
     }
+
+    bool DeleteFile(const std::string& relativePath) {
+        // Combine the root path with the requested relative path (루트 경로와 요청된 상대 경로 결합)
+        fs::path fullPath = GetEngineRootPath() / relativePath;
+
+        if (!fs::exists(fullPath)) {
+            return true; // Already gone - not an error (이미 없음 - 오류 아님)
+        }
+
+        std::error_code ec;
+        fs::remove(fullPath, ec);
+        return !ec; // true only if the remove actually succeeded (실제로 삭제에 성공했을 때만 true)
+    }
 }

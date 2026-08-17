@@ -27,4 +27,6 @@ namespace Window {
 	// Release the Code Editor's Squirrel VM (called once on engine shutdown)
 	// (코드 에디터의 스쿼럴 VM 해제 - 엔진 종료 시 한 번 호출)
 	void ShutdownCodeEditor();
+
+	void SetProjectDirectory(const std::string& projectPath);
 }
